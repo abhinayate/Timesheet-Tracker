@@ -1,109 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Abhinaya Timesheet Tracker</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KSN Timesheet Tracker</title>
   <style>
     body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background-color: #f5f7fa;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
       margin: 0;
       padding: 30px;
     }
-    h2 {
-      color: #1565c0;
+    h1 {
       text-align: center;
+      color: #0056b3;
     }
-    form {
-      background: white;
+    .form-container {
       max-width: 600px;
-      margin: 0 auto;
+      margin: 0 auto 20px;
+      background: white;
       padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     label {
       display: block;
-      margin-bottom: 6px;
-      font-weight: 600;
+      margin-bottom: 5px;
+      font-weight: bold;
     }
     input, button {
       width: 100%;
       padding: 10px;
       margin-bottom: 15px;
+      border-radius: 5px;
       border: 1px solid #ccc;
-      border-radius: 6px;
+      font-size: 15px;
     }
     button {
-      background-color: #1565c0;
+      background-color: #007bff;
       color: white;
+      border: none;
       cursor: pointer;
-      font-weight: bold;
-      transition: background 0.3s ease;
     }
     button:hover {
-      background-color: #0d47a1;
+      background-color: #0056b3;
     }
     table {
-      width: 90%;
-      margin: 30px auto;
+      width: 100%;
       border-collapse: collapse;
       background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     th, td {
       border: 1px solid #ddd;
-      padding: 10px;
       text-align: center;
+      padding: 8px;
     }
     th {
-      background-color: #1565c0;
+      background-color: #007bff;
       color: white;
     }
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    .total {
-      text-align: right;
+    tfoot td {
       font-weight: bold;
-      margin: 20px auto;
-      width: 90%;
+      background: #e9ecef;
     }
     .delete-btn {
-      background-color: #e53935;
+      background-color: #dc3545;
       color: white;
       border: none;
-      padding: 6px 10px;
+      padding: 5px 10px;
       border-radius: 4px;
       cursor: pointer;
     }
     .delete-btn:hover {
-      background-color: #b71c1c;
+      background-color: #b02a37;
     }
-    #msg {
-      text-align: center;
-      font-weight: 500;
+    .download-btn {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      width: 220px;
+      display: block;
+      margin: 20px auto;
+      font-size: 16px;
+    }
+    .download-btn:hover {
+      background-color: #1e7e34;
     }
   </style>
 </head>
 <body>
-  <h2>Abhinaya's Timesheet</h2>
+  <h1>KSN Timesheet Tracker</h1>
 
-  <form id="taskForm">
-    <label>Date</label>
-    <input type="date" id="date" name="date" required>
+  <div class="form-container">
+    <label for="date">Date</label>
+    <input type="date" id="date" required />
 
-    <label>Task</label>
-    <input type="text" id="task" name="task" placeholder="Enter task details" required>
+    <label for="task">Task Description</label>
+    <input type="text" id="task" placeholder="e.g. Document creation" required />
 
-    <label>Hours</label>
-    <input type="number" id="hours" name="hours" placeholder="Enter hours spent" required>
+    <label for="hours">Hours Spent</label>
+    <input type="number" id="hours" placeholder="e.g. 4" required min="0" />
 
-    <button type="submit">Add Task</button>
-  </form>
-
-  <p id="msg"></p>
+    <button id="addTaskBtn">Add Task</button>
+  </div>
 
   <table id="taskTable">
     <thead>
@@ -115,82 +117,95 @@
       </tr>
     </thead>
     <tbody></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">Total Hours</td>
+        <td id="totalHours">0</td>
+        <td></td>
+      </tr>
+    </tfoot>
   </table>
 
-  <div class="total" id="totalHours">Total Hours: 0</div>
+  <button class="download-btn" id="downloadExcelBtn">⬇️ Download Excel</button>
+
+  <!-- ExcelJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <script>
-    // 🔹 Replace this with your deployed Google Apps Script Web App URL
-    const scriptURL = "https://script.google.com/macros/s/AKfycbzD_Nc8rEJbFsitIDggwVjxHYdqhremQfA3J3H4oQ-j_h4OCHpG5N2iYDrjGpM8_s04/exec";
+    const addTaskBtn = document.getElementById("addTaskBtn");
+    const tableBody = document.querySelector("#taskTable tbody");
+    const totalHoursCell = document.getElementById("totalHours");
+    const downloadExcelBtn = document.getElementById("downloadExcelBtn");
 
-    const taskForm = document.getElementById("taskForm");
-    const taskTable = document.getElementById("taskTable").querySelector("tbody");
-    const totalHoursEl = document.getElementById("totalHours");
-    const msg = document.getElementById("msg");
-
-    let totalHours = 0;
-
-    taskForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-
+    addTaskBtn.addEventListener("click", () => {
       const date = document.getElementById("date").value;
-      const task = document.getElementById("task").value;
-      const hours = document.getElementById("hours").value;
+      const task = document.getElementById("task").value.trim();
+      const hours = parseFloat(document.getElementById("hours").value);
 
-      if (!date || !task || !hours) {
-        msg.innerText = "⚠️ Please fill all fields!";
+      if (!date || !task || isNaN(hours) || hours <= 0) {
+        alert("Please enter valid date, task, and hours");
         return;
       }
 
-      // Append data to Google Sheet
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${date}</td>
+        <td>${task}</td>
+        <td>${hours}</td>
+        <td><button class="delete-btn">Delete</button></td>
+      `;
+      tableBody.appendChild(row);
+
+      updateTotalHours();
+
+      // Save to Google Sheet
+      const scriptURL = "https://script.google.com/macros/s/AKfycbzD_Nc8rEJbFsitIDggwVjxHYdqhremQfA3J3H4oQ-j_h4OCHpG5N2iYDrjGpM8_s04/exec";
       const formData = new FormData();
       formData.append("date", date);
       formData.append("task", task);
       formData.append("hours", hours);
 
-    // Append data to Google Sheet (in background)
-fetch(scriptURL, { method: "POST", body: formData })
-  .then(() => {
-    console.log("Saved to Google Sheets");
-  })
-  .catch(err => {
-    console.error("Error!", err.message);
-    msg.innerText = "❌ Error adding task: " + err.message;
-  });
+      fetch(scriptURL, { method: "POST", body: formData })
+        .catch(err => console.error("Error!", err.message));
 
-// Instantly update UI — no delay
-msg.innerText = "✅ Task added successfully!";
-addTaskToTable(date, task, hours);
+      document.getElementById("task").value = "";
+      document.getElementById("hours").value = "";
+    });
 
-// Clear inputs
-document.getElementById("task").value = "";
-document.getElementById("hours").value = "";
+    // Delete task
+    tableBody.addEventListener("click", (e) => {
+      if (e.target.classList.contains("delete-btn")) {
+        e.target.closest("tr").remove();
+        updateTotalHours();
+      }
+    });
 
-
-    function addTaskToTable(date, task, hours) {
-      const row = taskTable.insertRow();
-      row.insertCell(0).innerText = date;
-      row.insertCell(1).innerText = task;
-      row.insertCell(2).innerText = hours;
-
-      const deleteCell = row.insertCell(3);
-      const delBtn = document.createElement("button");
-      delBtn.className = "delete-btn";
-      delBtn.innerText = "Delete";
-      delBtn.onclick = function() {
-        totalHours -= Number(hours);
-        totalHoursEl.innerText = "Total Hours: " + totalHours;
-        row.remove();
-      };
-      deleteCell.appendChild(delBtn);
-
-      totalHours += Number(hours);
-      totalHoursEl.innerText = "Total Hours: " + totalHours;
+    function updateTotalHours() {
+      let total = 0;
+      tableBody.querySelectorAll("tr").forEach(row => {
+        const hrs = parseFloat(row.children[2].textContent);
+        total += isNaN(hrs) ? 0 : hrs;
+      });
+      totalHoursCell.textContent = total.toFixed(2);
     }
+
+    // Download Excel
+    downloadExcelBtn.addEventListener("click", () => {
+      const wb = XLSX.utils.book_new();
+      const ws_data = [["Date", "Task", "Hours"]];
+      tableBody.querySelectorAll("tr").forEach(row => {
+        const cells = row.querySelectorAll("td");
+        ws_data.push([cells[0].textContent, cells[1].textContent, cells[2].textContent]);
+      });
+      ws_data.push(["", "Total Hours", totalHoursCell.textContent]);
+
+      const ws = XLSX.utils.aoa_to_sheet(ws_data);
+      XLSX.utils.book_append_sheet(wb, ws, "Timesheet");
+
+      const today = new Date().toISOString().split("T")[0];
+      const fileName = `Abhinaya_Timesheet_${today}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    });
   </script>
 </body>
 </html>
-
-
-
-
