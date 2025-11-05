@@ -1,287 +1,163 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>KSN Intranet — Timesheet</title>
-<style>
-  /* Light professional style */
-  :root{--bg:#f7f9fb;--card:#ffffff;--muted:#6b7280;--accent:#0b5fff;--border:#e6eef9}
-  body{font-family:Inter, Roboto, Arial, sans-serif;background:var(--bg);margin:0;padding:28px;color:#111}
-  .container{max-width:920px;margin:0 auto}
-  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-  h1{font-size:22px;margin:0;color:#0f1724}
-  small{color:var(--muted)}
-  .card{background:var(--card);border:1px solid var(--border);padding:18px;border-radius:10px;box-shadow:0 1px 4px rgba(16,24,40,0.04)}
-  form{display:grid;grid-template-columns: 1fr 120px 1fr;gap:12px;align-items:center}
-  label{font-size:12px;color:var(--muted)}
-  input[type="text"], input[type="number"], textarea, select{
-    width:100%;padding:10px;border-radius:8px;border:1px solid #dbe7fb;background:#fff;box-sizing:border-box;
-  }
-  textarea{grid-column:1 / -1;min-height:60px}
-  .btn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:8px;border:none;cursor:pointer}
-  .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
-  .task-list{margin-top:14px}
-  .task-item{display:flex;justify-content:space-between;gap:12px;padding:10px;border-radius:8px;border:1px solid #f0f4fb;margin-bottom:8px;align-items:center}
-  .task-info{display:flex;flex-direction:column}
-  .muted{color:var(--muted);font-size:13px}
-  .totals{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
-  .inputs-row{display:flex;gap:12px}
-  .small{font-size:13px}
-  .publish-area{margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  .note{font-size:13px;color:#334155}
-  .danger{color:#b91c1c;font-size:13px}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KSN Intranet - Timesheet Tracker</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f7f8fa;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #003366;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    main {
+      max-width: 700px;
+      margin: 30px auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 20px 30px;
+    }
+    h2 {
+      color: #003366;
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: 500;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    button {
+      background-color: #003366;
+      color: white;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      margin-top: 15px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover {
+      background-color: #00509e;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #003366;
+      color: white;
+    }
+    .total {
+      text-align: right;
+      font-weight: bold;
+      padding-top: 10px;
+      color: #003366;
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-  <header>
-    <div>
-      <h1>KSN Intranet — Timesheet</h1>
-      <small>Quick daily logging & publish to GitHub</small>
-    </div>
-    <div class="muted">Date: <strong id="todayLbl"></strong></div>
-  </header>
+  <header>KSN Intranet - Timesheet Tracker</header>
+  <main>
+    <h2>Daily Task Entry</h2>
+    <label for="task">Task Description</label>
+    <input type="text" id="task" placeholder="e.g., Document creation" />
 
-  <div class="card">
-    <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
-      <div class="muted small">Add tasks as you complete them — they appear below. Save/Publish once at EOD.</div>
-    </div>
+    <label for="hours">Hours Spent</label>
+    <input type="number" id="hours" placeholder="e.g., 4" min="0" step="0.5" />
 
-    <form id="taskForm" onsubmit="return false;">
-      <div>
-        <label>Task name</label>
-        <input id="taskName" type="text" placeholder="e.g. Document creation" required />
-      </div>
-      <div>
-        <label>Hours</label>
-        <input id="taskHours" type="number" step="0.25" min="0" max="24" value="1" required />
-      </div>
-      <div>
-        <label>Project / Notes</label>
-        <input id="taskNotes" type="text" placeholder="Optional notes" />
-      </div>
-      <textarea id="taskDesc" placeholder="Description (optional)"></textarea>
-      <div style="grid-column:1 / -1;display:flex;gap:8px;justify-content:flex-end">
-        <button class="btn" id="addBtn">Add Task</button>
-        <button class="btn ghost" id="clearBtn" type="button">Clear Inputs</button>
-      </div>
-    </form>
+    <button id="addTaskBtn">Add Task</button>
 
-    <div class="task-list" id="taskList"></div>
+    <h2>Today's Log</h2>
+    <table id="taskTable">
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Hours</th>
+          <th>Time Logged</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="total" id="totalHours">Total Hours: 0</div>
+  </main>
 
-    <div class="totals">
-      <div class="muted">Entries for <strong id="todayDate"></strong></div>
-      <div><strong>Total hours:</strong> <span id="totalHours">0</span></div>
-    </div>
+  <script>
+    const addTaskBtn = document.getElementById("addTaskBtn");
+    const taskInput = document.getElementById("task");
+    const hoursInput = document.getElementById("hours");
+    const taskTableBody = document.querySelector("#taskTable tbody");
+    const totalHoursDisplay = document.getElementById("totalHours");
 
-    <div style="margin-top:12px" class="publish-area">
-      <div style="flex:1;min-width:260px">
-        <label>GitHub Owner / Repo</label>
-        <div style="display:flex;gap:8px">
-          <input id="ghOwner" type="text" placeholder="owner (username or org)" />
-          <input id="ghRepo" type="text" placeholder="repo-name" />
-        </div>
-        <div style="display:flex;gap:8px;margin-top:6px">
-          <input id="ghPath" type="text" placeholder="file path (timesheets/today.json)" style="flex:1" value="timesheets/today.json" />
-        </div>
-        <div class="note">This app will create/update the JSON file in the repo path above.</div>
-      </div>
+    let totalHours = 0;
+    let taskList = JSON.parse(localStorage.getItem("timesheetData") || "[]");
 
-      <div style="min-width:340px">
-        <label>GitHub Personal Access Token (paste here) <span class="muted">(only stored in browser session)</span></label>
-        <input id="ghToken" type="text" placeholder="ghp_..." />
-        <div class="muted small" style="margin-top:6px">Token needs `repo` scope for private repo, or `public_repo` for public repo.</div>
-      </div>
+    function updateTable() {
+      taskTableBody.innerHTML = "";
+      totalHours = 0;
 
-      <div style="width:100%;display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
-        <button class="btn" id="publishBtn">Publish to GitHub</button>
-        <button class="btn ghost" id="exportBtn" type="button">Export JSON</button>
-      </div>
-    </div>
+      taskList.forEach((task) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${task.name}</td>
+          <td>${task.hours}</td>
+          <td>${task.time}</td>
+        `;
+        taskTableBody.appendChild(row);
+        totalHours += Number(task.hours);
+      });
 
-    <div style="margin-top:12px" class="note">
-      <strong>Security note:</strong> If you enter a GitHub token, it remains only in your browser while the page is open. Revoke the token in GitHub when not needed. If you prefer not to use tokens, use Export and push manually to GitHub.
-    </div>
-  </div>
-</div>
-
-<script>
-/* Timesheet app logic */
-const today = new Date();
-const todayKey = today.toISOString().slice(0,10); // YYYY-MM-DD
-document.getElementById('todayLbl').innerText = new Intl.DateTimeFormat('en-GB', {dateStyle:'medium'}).format(today);
-document.getElementById('todayDate').innerText = todayKey;
-
-let entries = []; // will hold today's entries
-
-// Load from localStorage if present
-const storageKey = 'ksn_timesheet_' + todayKey;
-const saved = localStorage.getItem(storageKey);
-if (saved) {
-  try { entries = JSON.parse(saved) } catch(e){ entries = [] }
-}
-renderList();
-
-function saveLocal() {
-  localStorage.setItem(storageKey, JSON.stringify(entries));
-  updateTotals();
-}
-
-function renderList(){
-  const list = document.getElementById('taskList');
-  list.innerHTML = '';
-  if (entries.length === 0) {
-    list.innerHTML = '<div class="muted" style="padding:10px">No tasks added yet for today.</div>';
-    updateTotals();
-    return;
-  }
-  entries.forEach((e, i) => {
-    const el = document.createElement('div');
-    el.className = 'task-item';
-    el.innerHTML = `
-      <div class="task-info">
-        <div style="font-weight:600">${escapeHtml(e.task)}</div>
-        <div class="muted">${escapeHtml(e.project || '')} ${e.desc ? ' · ' + escapeHtml(e.desc) : ''}</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-weight:600">${e.hours} h</div>
-        <div style="margin-top:6px">
-          <button class="btn ghost" data-i="${i}" onclick="editEntry(${i})">Edit</button>
-          <button class="btn" style="background:#ef4444;margin-left:6px" onclick="deleteEntry(${i})">Delete</button>
-        </div>
-      </div>
-    `;
-    list.appendChild(el);
-  });
-  updateTotals();
-}
-
-function updateTotals(){
-  const total = entries.reduce((s, cur) => s + (parseFloat(cur.hours)||0), 0);
-  document.getElementById('totalHours').innerText = Number(total.toFixed(2));
-  saveLocal();
-}
-
-document.getElementById('addBtn').addEventListener('click', () => {
-  const name = document.getElementById('taskName').value.trim();
-  const hours = parseFloat(document.getElementById('taskHours').value) || 0;
-  const project = document.getElementById('taskNotes').value.trim();
-  const desc = document.getElementById('taskDesc').value.trim();
-  if (!name) { alert('Please enter task name'); return; }
-  if (hours <= 0) { alert('Please enter hours > 0'); return; }
-  entries.push({ task: name, hours: Number(hours.toFixed(2)), project, desc, time: new Date().toISOString() });
-  // clear select inputs
-  document.getElementById('taskName').value='';
-  document.getElementById('taskHours').value=1;
-  document.getElementById('taskNotes').value='';
-  document.getElementById('taskDesc').value='';
-  renderList();
-});
-
-document.getElementById('clearBtn').addEventListener('click', () => {
-  document.getElementById('taskName').value='';
-  document.getElementById('taskHours').value=1;
-  document.getElementById('taskNotes').value='';
-  document.getElementById('taskDesc').value='';
-});
-
-function deleteEntry(i){
-  if (!confirm('Delete this entry?')) return;
-  entries.splice(i,1);
-  renderList();
-}
-
-function editEntry(i){
-  const e = entries[i];
-  document.getElementById('taskName').value = e.task;
-  document.getElementById('taskHours').value = e.hours;
-  document.getElementById('taskNotes').value = e.project || '';
-  document.getElementById('taskDesc').value = e.desc || '';
-  // remove old entry
-  entries.splice(i,1);
-  renderList();
-}
-
-document.getElementById('exportBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify({ date: todayKey, entries, totalHours: entries.reduce((s,c)=>s+(parseFloat(c.hours)||0),0)}, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `timesheet_${todayKey}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-});
-
-// Publish to GitHub using REST API (requires token)
-document.getElementById('publishBtn').addEventListener('click', async () => {
-  if (entries.length === 0 && !confirm('No entries to publish. Continue?')) return;
-
-  const owner = document.getElementById('ghOwner').value.trim();
-  const repo = document.getElementById('ghRepo').value.trim();
-  const path = document.getElementById('ghPath').value.trim() || `timesheets/${todayKey}.json`;
-  const token = document.getElementById('ghToken').value.trim();
-  if (!owner || !repo || !path) { alert('Please fill GitHub owner, repo and path'); return; }
-  if (!token) {
-    if (!confirm('No token provided — you will be prompted to download a file to push manually. Continue?')) return;
-    // fallback: download
-    document.getElementById('exportBtn').click();
-    return;
-  }
-
-  // Build content
-  const contentObj = { date: todayKey, entries, totalHours: entries.reduce((s,c)=>s+(parseFloat(c.hours)||0),0) };
-  const contentStr = JSON.stringify(contentObj, null, 2);
-  const contentB64 = btoa(unescape(encodeURIComponent(contentStr)));
-
-  try {
-    const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${path.replace(/^\/+/,'')}`;
-    // Check if file exists
-    const getResp = await fetch(apiBase, {
-      headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github.v3+json' }
-    });
-
-    let sha = null;
-    if (getResp.status === 200) {
-      const js = await getResp.json();
-      sha = js.sha;
-    } else if (getResp.status === 404) {
-      // file doesn't exist -> will create
-      sha = null;
-    } else {
-      const t = await getResp.text();
-      throw new Error('GitHub read error: ' + getResp.status + ' ' + t);
+      totalHoursDisplay.textContent = "Total Hours: " + totalHours;
     }
 
-    const putBody = {
-      message: `Timesheet: ${todayKey}`,
-      content: contentB64,
-      committer: { name: "Timesheet App", email: "no-reply@example.com" }
-    };
-    if (sha) putBody.sha = sha;
+    addTaskBtn.addEventListener("click", () => {
+      const taskName = taskInput.value.trim();
+      const hours = parseFloat(hoursInput.value);
 
-    const putResp = await fetch(apiBase, {
-      method: 'PUT',
-      headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github.v3+json' },
-      body: JSON.stringify(putBody)
+      if (!taskName || isNaN(hours) || hours <= 0) {
+        alert("Please enter a valid task and hours.");
+        return;
+      }
+
+      const newTask = {
+        name: taskName,
+        hours: hours,
+        time: new Date().toLocaleTimeString(),
+      };
+
+      taskList.push(newTask);
+      localStorage.setItem("timesheetData", JSON.stringify(taskList));
+
+      taskInput.value = "";
+      hoursInput.value = "";
+      updateTable();
     });
 
-    if (!putResp.ok) {
-      const err = await putResp.text();
-      throw new Error('GitHub write error: ' + putResp.status + ' ' + err);
-    }
-    const result = await putResp.json();
-    alert('Published successfully to GitHub!\n\nFile committed: ' + result.content.path);
-  } catch (err) {
-    console.error(err);
-    alert('Publish failed: ' + err.message + '\n\nYou can Export JSON and push manually if needed.');
-  }
-});
-
-/* small helper */
-function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-</script>
+    // Load saved data on startup
+    updateTable();
+  </script>
 </body>
 </html>
