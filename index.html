@@ -139,7 +139,7 @@
       updateTotalHours();
 
       // Save to Google Sheet
-      const scriptURL = "YOUR_GOOGLE_SCRIPT_WEB_APP_URL";
+      const scriptURL = "https://script.google.com/macros/s/AKfycbzBW5Y9SxK2q0oQxcT37_iSDjbUFWiD1Grb7NweEi2EE4Qgy62obpw8AvTTINytUk8CRg/exec";
       fetch(scriptURL, {
         method: "POST",
         body: new FormData(Object.assign(document.createElement("form"), {
@@ -170,3 +170,4 @@
   </script>
 </body>
 </html>
+
