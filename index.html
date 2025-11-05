@@ -3,207 +3,170 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KSN Intranet - Timesheet Tracker</title>
+  <title>KSN Timesheet Tracker</title>
   <style>
     body {
-      font-family: "Segoe UI", sans-serif;
-      background: #f7f8fa;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
       margin: 0;
-      padding: 0;
+      padding: 30px;
     }
-    header {
-      background-color: #003366;
-      color: white;
+    h1 {
       text-align: center;
-      padding: 20px;
-      font-size: 24px;
-      font-weight: bold;
+      color: #0056b3;
     }
-    main {
-      max-width: 780px;
-      margin: 30px auto;
+    .form-container {
+      max-width: 600px;
+      margin: 0 auto 20px;
       background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 20px 30px;
-    }
-    h2 {
-      color: #003366;
-      margin-bottom: 10px;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     label {
       display: block;
-      margin-top: 10px;
-      font-weight: 500;
+      margin-bottom: 5px;
+      font-weight: bold;
     }
-    input {
+    input, button {
       width: 100%;
-      padding: 8px;
-      margin-top: 5px;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 5px;
       border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
+      font-size: 15px;
     }
     button {
-      background-color: #003366;
+      background-color: #007bff;
       color: white;
-      padding: 10px 18px;
       border: none;
-      border-radius: 6px;
-      margin-top: 15px;
       cursor: pointer;
-      font-weight: 600;
     }
     button:hover {
-      background-color: #00509e;
+      background-color: #0056b3;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      background: white;
     }
     th, td {
       border: 1px solid #ddd;
+      text-align: center;
       padding: 8px;
-      text-align: left;
     }
     th {
-      background-color: #003366;
+      background-color: #007bff;
       color: white;
     }
-    .total {
-      text-align: right;
+    tfoot td {
       font-weight: bold;
-      padding-top: 10px;
-      color: #003366;
+      background: #e9ecef;
     }
-    .button-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 10px;
-      flex-wrap: wrap;
-      gap: 10px;
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .delete-btn:hover {
+      background-color: #b02a37;
     }
   </style>
 </head>
 <body>
-  <header>KSN Intranet - Timesheet Tracker</header>
-  <main>
-    <h2>Daily Task Entry</h2>
+  <h1>KSN Timesheet Tracker</h1>
 
+  <div class="form-container">
     <label for="date">Date</label>
-    <input type="date" id="date" />
+    <input type="date" id="date" required />
 
     <label for="task">Task Description</label>
-    <input type="text" id="task" placeholder="e.g., Document creation" />
+    <input type="text" id="task" placeholder="e.g. Document creation" required />
 
     <label for="hours">Hours Spent</label>
-    <input type="number" id="hours" placeholder="e.g., 4" min="0" step="0.5" />
+    <input type="number" id="hours" placeholder="e.g. 4" required min="0" />
 
-    <div class="button-row">
-      <button id="addTaskBtn">Add Task</button>
-      <button id="downloadBtn">Download Log (CSV)</button>
-    </div>
+    <button id="addTaskBtn">Add Task</button>
+  </div>
 
-    <h2>Task Log</h2>
-    <table id="taskTable">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Task</th>
-          <th>Hours</th>
-          <th>Time Logged</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <div class="total" id="totalHours">Total Hours: 0</div>
-  </main>
+  <table id="taskTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Task</th>
+        <th>Hours</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">Total Hours</td>
+        <td id="totalHours">0</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
 
   <script>
     const addTaskBtn = document.getElementById("addTaskBtn");
-    const downloadBtn = document.getElementById("downloadBtn");
-    const taskInput = document.getElementById("task");
-    const hoursInput = document.getElementById("hours");
-    const dateInput = document.getElementById("date");
-    const taskTableBody = document.querySelector("#taskTable tbody");
-    const totalHoursDisplay = document.getElementById("totalHours");
-
-    let totalHours = 0;
-    let taskList = JSON.parse(localStorage.getItem("timesheetData") || "[]");
-
-    function updateTable() {
-      taskTableBody.innerHTML = "";
-      totalHours = 0;
-
-      taskList.forEach((task) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${task.date}</td>
-          <td>${task.name}</td>
-          <td>${task.hours}</td>
-          <td>${task.time}</td>
-        `;
-        taskTableBody.appendChild(row);
-        totalHours += Number(task.hours);
-      });
-
-      totalHoursDisplay.textContent = "Total Hours: " + totalHours;
-    }
+    const tableBody = document.querySelector("#taskTable tbody");
+    const totalHoursCell = document.getElementById("totalHours");
 
     addTaskBtn.addEventListener("click", () => {
-      const date = dateInput.value;
-      const taskName = taskInput.value.trim();
-      const hours = parseFloat(hoursInput.value);
+      const date = document.getElementById("date").value;
+      const task = document.getElementById("task").value.trim();
+      const hours = parseFloat(document.getElementById("hours").value);
 
-      if (!date || !taskName || isNaN(hours) || hours <= 0) {
-        alert("Please enter date, task, and hours correctly.");
+      if (!date || !task || isNaN(hours) || hours <= 0) {
+        alert("Please enter valid date, task and hours");
         return;
       }
 
-      const newTask = {
-        date: date,
-        name: taskName,
-        hours: hours,
-        time: new Date().toLocaleTimeString(),
-      };
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${date}</td>
+        <td>${task}</td>
+        <td>${hours}</td>
+        <td><button class="delete-btn">Delete</button></td>
+      `;
+      tableBody.appendChild(row);
 
-      taskList.push(newTask);
-      localStorage.setItem("timesheetData", JSON.stringify(taskList));
+      updateTotalHours();
 
-      // Optional: send to Google Sheets (once connected)
-      // sendToGoogleSheet(newTask);
+      // Save to Google Sheet
+      const scriptURL = "YOUR_GOOGLE_SCRIPT_WEB_APP_URL";
+      fetch(scriptURL, {
+        method: "POST",
+        body: new FormData(Object.assign(document.createElement("form"), {
+          date, task, hours
+        }))
+      }).catch(err => console.error("Error!", err.message));
 
-      taskInput.value = "";
-      hoursInput.value = "";
-      updateTable();
+      // Clear inputs
+      document.getElementById("task").value = "";
+      document.getElementById("hours").value = "";
     });
 
-    // Download CSV
-    downloadBtn.addEventListener("click", () => {
-      if (taskList.length === 0) {
-        alert("No tasks to download!");
-        return;
+    tableBody.addEventListener("click", (e) => {
+      if (e.target.classList.contains("delete-btn")) {
+        e.target.closest("tr").remove();
+        updateTotalHours();
       }
+    });
 
-      let csvContent = "data:text/csv;charset=utf-8,Date,Task,Hours,Time Logged\n";
-      taskList.forEach(task => {
-        csvContent += `${task.date},${task.name},${task.hours},${task.time}\n`;
+    function updateTotalHours() {
+      let total = 0;
+      tableBody.querySelectorAll("tr").forEach(row => {
+        const hrs = parseFloat(row.children[2].textContent);
+        total += isNaN(hrs) ? 0 : hrs;
       });
-
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      const today = new Date().toISOString().split("T")[0];
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `Timesheet_${today}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-
-    // Load saved data
-    updateTable();
+      totalHoursCell.textContent = total.toFixed(2);
+    }
   </script>
 </body>
 </html>
