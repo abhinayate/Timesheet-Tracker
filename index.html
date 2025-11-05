@@ -148,18 +148,24 @@
       formData.append("task", task);
       formData.append("hours", hours);
 
-      fetch(scriptURL, { method: "POST", body: formData })
-        .then(() => {
-          msg.innerText = "✅ Task added successfully!";
-          addTaskToTable(date, task, hours);
-          document.getElementById("task").value = "";
-          document.getElementById("hours").value = "";
-        })
-        .catch(err => {
-          msg.innerText = "❌ Error adding task: " + err.message;
-          console.error("Error!", err.message);
-        });
-    });
+    // Append data to Google Sheet (in background)
+fetch(scriptURL, { method: "POST", body: formData })
+  .then(() => {
+    console.log("Saved to Google Sheets");
+  })
+  .catch(err => {
+    console.error("Error!", err.message);
+    msg.innerText = "❌ Error adding task: " + err.message;
+  });
+
+// Instantly update UI — no delay
+msg.innerText = "✅ Task added successfully!";
+addTaskToTable(date, task, hours);
+
+// Clear inputs
+document.getElementById("task").value = "";
+document.getElementById("hours").value = "";
+
 
     function addTaskToTable(date, task, hours) {
       const row = taskTable.insertRow();
@@ -184,6 +190,7 @@
   </script>
 </body>
 </html>
+
 
 
 
