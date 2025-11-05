@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Timesheet Viewer</title>
+<style>
+  body{font-family:Inter, Arial; background:#f6fafc; padding:20px; color:#0f1724}
+  .container{max-width:1000px;margin:0 auto}
+  h1{margin:0 0 10px 0}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden}
+  th,td{padding:10px;border-bottom:1px solid #eef6ff;text-align:left}
+  th{background:#f0f7ff;color:#0b3b80}
+  tr.total{font-weight:700;background:#f7fbff}
+  .muted{color:#6b7280}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Timesheet Viewer</h1>
+  <div class="muted">Enter the raw JSON file URL (raw.githubusercontent...) for the day</div>
+  <div style="margin:12px 0;display:flex;gap:8px">
+    <input id="rawUrl" style="flex:1;padding:8px;border-radius:6px;border:1px solid #dbeafc" placeholder="https://raw.githubusercontent.com/owner/repo/branch/path/to/file.json"/>
+    <button onclick="loadIt()" style="padding:8px 12px;border-radius:6px;background:#0b5fff;color:#fff;border:none">Load</button>
+  </div>
+  <div id="out"></div>
+</div>
+
+<script>
+async function loadIt(){
+  const url = document.getElementById('rawUrl').value.trim();
+  if (!url) return alert('Enter the raw JSON file URL from GitHub');
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('Failed to fetch file: ' + r.status);
+    const data = await r.json();
+    render(data);
+  } catch(err) {
+    document.getElementById('out').innerHTML = '<div style="color:#b91c1c">Error: '+err.message+'</div>';
+  }
+}
+
+function render(d){
+  const out = document.getElementById('out');
+  const rows = d.entries || [];
+  let html = `<table><thead><tr><th>Task</th><th>Project/Notes</th><th>Description</th><th>Hours</th><th>Logged at</th></tr></thead><tbody>`;
+  rows.forEach(r => {
+    html += `<tr><td>${esc(r.task)}</td><td>${esc(r.project)}</td><td>${esc(r.desc)}</td><td>${esc(r.hours)} h</td><td class="muted">${new Date(r.time).toLocaleString()}</td></tr>`;
+  });
+  html += `</tbody><tr class="total"><td colspan="3">Total</td><td colspan="2">${Number(d.totalHours).toFixed(2)} h</td></tr></table>`;
+  out.innerHTML = html;
+}
+
+function esc(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+</script>
+</body>
+</html>
