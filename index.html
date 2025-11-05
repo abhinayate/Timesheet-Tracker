@@ -75,10 +75,24 @@
     .delete-btn:hover {
       background-color: #b02a37;
     }
+    .download-btn {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      width: 220px;
+      display: block;
+      margin: 20px auto;
+      font-size: 16px;
+    }
+    .download-btn:hover {
+      background-color: #1e7e34;
+    }
   </style>
 </head>
 <body>
-  <h1>KSN Timesheet Tracker</h1>
+  <h1>Abhinaya Timesheet Tracker</h1>
 
   <div class="form-container">
     <label for="date">Date</label>
@@ -112,10 +126,16 @@
     </tfoot>
   </table>
 
+  <button class="download-btn" id="downloadExcelBtn">⬇️ Download Excel</button>
+
+  <!-- ExcelJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <script>
     const addTaskBtn = document.getElementById("addTaskBtn");
     const tableBody = document.querySelector("#taskTable tbody");
     const totalHoursCell = document.getElementById("totalHours");
+    const downloadExcelBtn = document.getElementById("downloadExcelBtn");
 
     addTaskBtn.addEventListener("click", () => {
       const date = document.getElementById("date").value;
@@ -123,7 +143,7 @@
       const hours = parseFloat(document.getElementById("hours").value);
 
       if (!date || !task || isNaN(hours) || hours <= 0) {
-        alert("Please enter valid date, task and hours");
+        alert("Please enter valid date, task, and hours");
         return;
       }
 
@@ -140,18 +160,19 @@
 
       // Save to Google Sheet
       const scriptURL = "https://script.google.com/macros/s/AKfycbzBW5Y9SxK2q0oQxcT37_iSDjbUFWiD1Grb7NweEi2EE4Qgy62obpw8AvTTINytUk8CRg/exec";
-      fetch(scriptURL, {
-        method: "POST",
-        body: new FormData(Object.assign(document.createElement("form"), {
-          date, task, hours
-        }))
-      }).catch(err => console.error("Error!", err.message));
+      const formData = new FormData();
+      formData.append("date", date);
+      formData.append("task", task);
+      formData.append("hours", hours);
 
-      // Clear inputs
+      fetch(scriptURL, { method: "POST", body: formData })
+        .catch(err => console.error("Error!", err.message));
+
       document.getElementById("task").value = "";
       document.getElementById("hours").value = "";
     });
 
+    // Delete task
     tableBody.addEventListener("click", (e) => {
       if (e.target.classList.contains("delete-btn")) {
         e.target.closest("tr").remove();
@@ -167,7 +188,24 @@
       });
       totalHoursCell.textContent = total.toFixed(2);
     }
+
+    // Download Excel
+    downloadExcelBtn.addEventListener("click", () => {
+      const wb = XLSX.utils.book_new();
+      const ws_data = [["Date", "Task", "Hours"]];
+      tableBody.querySelectorAll("tr").forEach(row => {
+        const cells = row.querySelectorAll("td");
+        ws_data.push([cells[0].textContent, cells[1].textContent, cells[2].textContent]);
+      });
+      ws_data.push(["", "Total Hours", totalHoursCell.textContent]);
+
+      const ws = XLSX.utils.aoa_to_sheet(ws_data);
+      XLSX.utils.book_append_sheet(wb, ws, "Timesheet");
+
+      const today = new Date().toISOString().split("T")[0];
+      const fileName = `Abhinaya_Timesheet_${today}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    });
   </script>
 </body>
 </html>
-
