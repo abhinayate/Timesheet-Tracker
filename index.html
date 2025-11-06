@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KSN Timesheet Tracker</title>
+  <title>Abhinaya Timesheet Tracker</title>
   <style>
     body {
       font-family: "Segoe UI", Tahoma, sans-serif;
@@ -29,13 +29,16 @@
       margin-bottom: 5px;
       font-weight: bold;
     }
-    input, button {
+    input, textarea, button {
       width: 100%;
       padding: 10px;
       margin-bottom: 15px;
       border-radius: 5px;
       border: 1px solid #ccc;
       font-size: 15px;
+    }
+    textarea {
+      resize: vertical;
     }
     button {
       background-color: #007bff;
@@ -92,14 +95,17 @@
   </style>
 </head>
 <body>
-  <h1>KSN Timesheet Tracker</h1>
+  <h1>Abhinaya Timesheet Tracker</h1>
 
   <div class="form-container">
     <label for="date">Date</label>
     <input type="date" id="date" required />
 
-    <label for="task">Task Description</label>
-    <input type="text" id="task" placeholder="e.g. Document creation" required />
+    <label for="task">Task</label>
+    <input type="text" id="task" placeholder="e.g. Document Creation" required />
+
+    <label for="description">Description</label>
+    <textarea id="description" rows="3" placeholder="Briefly describe what you did"></textarea>
 
     <label for="hours">Hours Spent</label>
     <input type="number" id="hours" placeholder="e.g. 4" required min="0" />
@@ -112,6 +118,7 @@
       <tr>
         <th>Date</th>
         <th>Task</th>
+        <th>Description</th>
         <th>Hours</th>
         <th>Action</th>
       </tr>
@@ -119,7 +126,7 @@
     <tbody></tbody>
     <tfoot>
       <tr>
-        <td colspan="2">Total Hours</td>
+        <td colspan="3">Total Hours</td>
         <td id="totalHours">0</td>
         <td></td>
       </tr>
@@ -128,7 +135,6 @@
 
   <button class="download-btn" id="downloadExcelBtn">⬇️ Download Excel</button>
 
-  <!-- ExcelJS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <script>
@@ -140,6 +146,7 @@
     addTaskBtn.addEventListener("click", () => {
       const date = document.getElementById("date").value;
       const task = document.getElementById("task").value.trim();
+      const description = document.getElementById("description").value.trim();
       const hours = parseFloat(document.getElementById("hours").value);
 
       if (!date || !task || isNaN(hours) || hours <= 0) {
@@ -151,6 +158,7 @@
       row.innerHTML = `
         <td>${date}</td>
         <td>${task}</td>
+        <td>${description}</td>
         <td>${hours}</td>
         <td><button class="delete-btn">Delete</button></td>
       `;
@@ -163,12 +171,14 @@
       const formData = new FormData();
       formData.append("date", date);
       formData.append("task", task);
+      formData.append("description", description);
       formData.append("hours", hours);
 
       fetch(scriptURL, { method: "POST", body: formData })
         .catch(err => console.error("Error!", err.message));
 
       document.getElementById("task").value = "";
+      document.getElementById("description").value = "";
       document.getElementById("hours").value = "";
     });
 
@@ -183,21 +193,25 @@
     function updateTotalHours() {
       let total = 0;
       tableBody.querySelectorAll("tr").forEach(row => {
-        const hrs = parseFloat(row.children[2].textContent);
+        const hrs = parseFloat(row.children[3].textContent);
         total += isNaN(hrs) ? 0 : hrs;
       });
       totalHoursCell.textContent = total.toFixed(2);
     }
 
-    // Download Excel
     downloadExcelBtn.addEventListener("click", () => {
       const wb = XLSX.utils.book_new();
-      const ws_data = [["Date", "Task", "Hours"]];
+      const ws_data = [["Date", "Task", "Description", "Hours"]];
       tableBody.querySelectorAll("tr").forEach(row => {
         const cells = row.querySelectorAll("td");
-        ws_data.push([cells[0].textContent, cells[1].textContent, cells[2].textContent]);
+        ws_data.push([
+          cells[0].textContent,
+          cells[1].textContent,
+          cells[2].textContent,
+          cells[3].textContent
+        ]);
       });
-      ws_data.push(["", "Total Hours", totalHoursCell.textContent]);
+      ws_data.push(["", "", "Total Hours", totalHoursCell.textContent]);
 
       const ws = XLSX.utils.aoa_to_sheet(ws_data);
       XLSX.utils.book_append_sheet(wb, ws, "Timesheet");
@@ -209,4 +223,3 @@
   </script>
 </body>
 </html>
-
