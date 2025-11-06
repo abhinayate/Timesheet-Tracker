@@ -167,7 +167,8 @@
       updateTotalHours();
 
       // Save to Google Sheet
-      const scriptURL = "https://script.google.com/macros/s/AKfycbzQ9JNlKCN7xoNJSzQvIWDAgWfaIc_GaHmEtl3w7SVKrm9qVsSfMi8kRbhGlRjJopSI/exec";
+      const scriptURL = "https://script.google.com/macros/s/AKfycbzQ9JNlKCN7xoNJSzQvIWDAgWfaIc_GaHmEtl3w7SVKrm9qVsSfMi8kRbhGlRjJopSI/exec"
+       
       const formData = new FormData();
       formData.append("date", date);
       formData.append("task", task);
@@ -223,4 +224,5 @@
   </script>
 </body>
 </html>
+
 
